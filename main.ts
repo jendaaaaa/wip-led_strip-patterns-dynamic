@@ -69,13 +69,13 @@ let state = INITIALIZATION
 basic.forever(function(){
     if(canContinue){
         if (state === TESTING){
-            animSwipe(colWrongPattern)
+            animSwipe(colWrongPattern, ANIM_SWIPE_DELAY, ANIM_SWIPE_OFFSET)
             pause(1000)
         }
         
         else if (state === INITIALIZATION){
             canPress = false
-            animSwipe(colInitialSwipe)
+            animSwipe(colInitialSwipe, ANIM_SWIPE_DELAY, ANIM_SWIPE_OFFSET)
             pause(INIT_DELAY)
             state = GENERATING_PATTERN
         }
@@ -113,7 +113,6 @@ basic.forever(function(){
 
         else if (state === CORRECT_INPUT) {
             canPress = false
-            showPassedLayer()
             arrInput = []
             arrCorrect = []
             currentLevel = currentLevel + 1
@@ -127,7 +126,7 @@ basic.forever(function(){
             arrInput = []
             arrCorrect = []
             currentLayer = 0
-            animSwipe(colWrongPattern)
+            animSwipe(colWrongPattern, ANIM_SWIPE_DELAY, ANIM_SWIPE_OFFSET)
             currentLevel = INITIAL_LEVEL
             state = GENERATING_PATTERN
         }
@@ -151,16 +150,15 @@ function clearButton(button: number) {
     }
 }
 
-function animSwipe(color: NeoPixelColors){
-    clearAll()
-    for (let i = 0; i < NUM_STRIPS+ANIM_SWIPE_OFFSET; i++){
+function animSwipe(color: NeoPixelColors, delay: number, offset: number){
+    for (let i = 0; i < NUM_STRIPS+offset; i++){
         if (i < NUM_STRIPS){
             stripArr[i].showColor(color)
         }
-        if (i >= ANIM_SWIPE_OFFSET){
-            stripArr[i-ANIM_SWIPE_OFFSET].showColor(colEmpty)
+        if (i >= offset){
+            stripArr[i-offset].showColor(colEmpty)
         }
-        pause(ANIM_SWIPE_DELAY)
+        pause(delay)
     }
 }
 
@@ -192,8 +190,10 @@ function showWrong(){
 }
 
 function checkWin(){
+    showPassedLayer()
     if (currentLayer === NUM_STRIPS/2){
-        showCorrect()
+        animSwipe(colEmpty, ANIM_SWIPE_DELAY, ANIM_SWIPE_OFFSET-2)
+        animSwipe(colPassedLayer, ANIM_SWIPE_DELAY, ANIM_SWIPE_OFFSET+4)
         currentLayer = 0
         currentLevel = INITIAL_LEVEL
     }
@@ -224,6 +224,7 @@ function showPattern(){
 //// INPUTS
 control.onEvent(EventBusSource.MICROBIT_ID_BUTTON_A, EventBusValue.MICROBIT_EVT_ANY, function() {
     if(canPress){
+        canPress = false
         if (control.eventValue() === EventBusValue.MICROBIT_BUTTON_EVT_DOWN){
             arrInput.push(BUTTON_A)
             currentButtonA.showColor(colButtonPressed)
@@ -233,10 +234,12 @@ control.onEvent(EventBusSource.MICROBIT_ID_BUTTON_A, EventBusValue.MICROBIT_EVT_
             currentButtonA.show()
             canContinue = true
         }
+        canPress = true
     }
 })
 control.onEvent(EventBusSource.MICROBIT_ID_BUTTON_B, EventBusValue.MICROBIT_EVT_ANY, function () {
     if(canPress){
+        canPress = false
         if (control.eventValue() === EventBusValue.MICROBIT_BUTTON_EVT_DOWN) {
             arrInput.push(BUTTON_B)
             currentButtonB.showColor(colButtonPressed)
@@ -246,5 +249,6 @@ control.onEvent(EventBusSource.MICROBIT_ID_BUTTON_B, EventBusValue.MICROBIT_EVT_
             currentButtonB.show()
             canContinue = true
         }
+        canPress = true
     }
 })
