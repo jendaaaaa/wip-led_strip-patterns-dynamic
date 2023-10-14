@@ -1,7 +1,8 @@
 //// INIT
 led.enable(false)
-led.enable(false)
-let stripPins = [
+let stripArr: neopixel.Strip[] = [];
+let NUM_LEDS_PER_STRIP = 6;
+let PINS_ARR = [
     DigitalPin.P0,
     DigitalPin.P1,
     DigitalPin.P2,
@@ -10,47 +11,30 @@ let stripPins = [
     DigitalPin.P13,
     DigitalPin.P14,
     DigitalPin.P15];
-let numLedsPerStrip = 6;
-let stripsArr: neopixel.Strip[] = [];
-for (let i = 0; i < stripPins.length; i++) {
-    let strip = neopixel.create(stripPins[i], numLedsPerStrip, NeoPixelMode.RGB);
+for (let i = 0; i < PINS_ARR.length; i++) {
+    let strip = neopixel.create(PINS_ARR[i], NUM_LEDS_PER_STRIP, NeoPixelMode.RGB);
     strip.clear();
-    strip.setBrightness(20)
+    strip.setBrightness(5)
     strip.show();
-    stripsArr.push(strip);
+    stripArr.push(strip);
 }
-//// CONSTANTS
-// strips
-let STRIP_L0 = stripsArr[0]
-let STRIP_L1 = stripsArr[1]
-let STRIP_L2 = stripsArr[2]
-let STRIP_L3 = stripsArr[3]
-let STRIP_R0 = stripsArr[7]
-let STRIP_R1 = stripsArr[6]
-let STRIP_R2 = stripsArr[5]
-let STRIP_R3 = stripsArr[4]
-
-// count
-let NUM_COLS = stripsArr.length
-let NUM_ROWS = numLedsPerStrip
-
-// name
-let BUTTON_A = 1
-let BUTTON_B = 0
+let NUM_STRIPS = stripArr.length
 
 // consts
-let INITIAL_LEVEL = 4
+let INITIAL_LEVEL = 2
+let BUTTON_A = 1
+let BUTTON_B = 0
+let ANIM_SWIPE_OFFSET = 4
 
 // init
 let currentLayer = 0
-let currentButtonA = stripsArr[0]
-let currentButtonB = stripsArr[7]
+let currentButtonA = stripArr[0]
+let currentButtonB = stripArr[7]
 let firstEntry = true
 let isCorrect = false
 let currentLevel = INITIAL_LEVEL
 let canContinue = true
 let canPress = true
-let strip = stripsArr[0]
 let arrInput: number[] = []
 let arrCorrect: number[] = []
 
@@ -58,6 +42,8 @@ let arrCorrect: number[] = []
 let colButtonPressed = NeoPixelColors.Blue
 let colCorrectPattern = NeoPixelColors.Orange
 let colPassedLayer = NeoPixelColors.Green
+let colWrongPattern = NeoPixelColors.Red
+let colInitialSwipe = NeoPixelColors.White
 let colEmpty = NeoPixelColors.Black
 
 // time
@@ -66,6 +52,7 @@ let ICON_TIME = 200
 let PATTERN_PAUSE = 200
 let CORRECT_WRONG_PAUSE = 400
 let INIT_DELAY = 500
+let ANIM_SWIPE_DELAY = 20
 
 // states
 let TESTING = -2
@@ -79,16 +66,16 @@ let WRONG_INPUT = 4
 //// STATE MACHINE
 let state = INITIALIZATION
 // state = TESTING
-// state = GENERATING_PATTERN
 basic.forever(function(){
     if(canContinue){
         if (state === TESTING){
-            showCorrect()
+            animSwipe(colWrongPattern)
+            pause(1000)
         }
         
         else if (state === INITIALIZATION){
             canPress = false
-            showCorrect()
+            animSwipe(colInitialSwipe)
             pause(INIT_DELAY)
             state = GENERATING_PATTERN
         }
@@ -139,6 +126,8 @@ basic.forever(function(){
             canPress = false
             arrInput = []
             arrCorrect = []
+            currentLayer = 0
+            animSwipe(colWrongPattern)
             currentLevel = INITIAL_LEVEL
             state = GENERATING_PATTERN
         }
@@ -162,35 +151,48 @@ function clearButton(button: number) {
     }
 }
 
+function animSwipe(color: NeoPixelColors){
+    clearAll()
+    for (let i = 0; i < NUM_STRIPS+ANIM_SWIPE_OFFSET; i++){
+        if (i < NUM_STRIPS){
+            stripArr[i].showColor(color)
+        }
+        if (i >= ANIM_SWIPE_OFFSET){
+            stripArr[i-ANIM_SWIPE_OFFSET].showColor(colEmpty)
+        }
+        pause(ANIM_SWIPE_DELAY)
+    }
+}
+
 function showPassedLayer(){
     currentButtonA.showColor(colPassedLayer)
     currentButtonB.showColor(colPassedLayer)
 }
 
 function showCorrect(){
-    for (let i = 0; i < NUM_COLS; i++){
-        stripsArr[i].showColor(NeoPixelColors.Green)
+    for (let i = 0; i < NUM_STRIPS; i++){
+        stripArr[i].showColor(NeoPixelColors.Green)
     }
     pause(CORRECT_WRONG_PAUSE)
-    for (let i = 0; i < NUM_COLS; i++) {
-        stripsArr[i].clear()
-        stripsArr[i].show()
+    for (let i = 0; i < NUM_STRIPS; i++) {
+        stripArr[i].clear()
+        stripArr[i].show()
     }
 }
 
 function showWrong(){
-    for (let i = 0; i < NUM_COLS; i++) {
-        stripsArr[i].showColor(NeoPixelColors.Red)
+    for (let i = 0; i < NUM_STRIPS; i++) {
+        stripArr[i].showColor(NeoPixelColors.Red)
     }
     pause(CORRECT_WRONG_PAUSE)
-    for (let i = 0; i < NUM_COLS; i++) {
-        stripsArr[i].clear()
-        stripsArr[i].show()
+    for (let i = 0; i < NUM_STRIPS; i++) {
+        stripArr[i].clear()
+        stripArr[i].show()
     }
 }
 
 function checkWin(){
-    if (currentLayer === NUM_COLS/2){
+    if (currentLayer === NUM_STRIPS/2){
         showCorrect()
         currentLayer = 0
         currentLevel = INITIAL_LEVEL
@@ -198,13 +200,13 @@ function checkWin(){
 }
 
 function getButtonStrips(){
-    currentButtonA = stripsArr[0 + currentLayer]
-    currentButtonB = stripsArr[7 - currentLayer]
+    currentButtonA = stripArr[0 + currentLayer]
+    currentButtonB = stripArr[7 - currentLayer]
 }
 
 function clearAll(){
-    for (let i = 0; i < NUM_COLS; i++){
-        strip = stripsArr[i]
+    for (let i = 0; i < NUM_STRIPS; i++){
+        let strip = stripArr[i]
         strip.clear()
         strip.show()
     }
