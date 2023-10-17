@@ -224,7 +224,6 @@ function showPattern(){
 //// INPUTS
 control.onEvent(EventBusSource.MICROBIT_ID_BUTTON_A, EventBusValue.MICROBIT_EVT_ANY, function() {
     if(canPress){
-        canPress = false
         if (control.eventValue() === EventBusValue.MICROBIT_BUTTON_EVT_DOWN){
             arrInput.push(BUTTON_A)
             currentButtonA.showColor(colButtonPressed)
@@ -234,12 +233,10 @@ control.onEvent(EventBusSource.MICROBIT_ID_BUTTON_A, EventBusValue.MICROBIT_EVT_
             currentButtonA.show()
             canContinue = true
         }
-        canPress = true
     }
 })
 control.onEvent(EventBusSource.MICROBIT_ID_BUTTON_B, EventBusValue.MICROBIT_EVT_ANY, function () {
     if(canPress){
-        canPress = false
         if (control.eventValue() === EventBusValue.MICROBIT_BUTTON_EVT_DOWN) {
             arrInput.push(BUTTON_B)
             currentButtonB.showColor(colButtonPressed)
@@ -249,6 +246,5 @@ control.onEvent(EventBusSource.MICROBIT_ID_BUTTON_B, EventBusValue.MICROBIT_EVT_
             currentButtonB.show()
             canContinue = true
         }
-        canPress = true
     }
 })
